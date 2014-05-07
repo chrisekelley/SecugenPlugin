@@ -1,12 +1,14 @@
 package org.rti.kidsthrive.secugenplugin;
 
+import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaWebView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-//import SecuGen.FDxSDKPro.JSGFPLib;
+import SecuGen.FDxSDKPro.JSGFPLib;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -51,7 +53,7 @@ public class SecugenPlugin extends CordovaPlugin {
     private Bitmap grayBitmap;
     private boolean mLed;
    
-//    private JSGFPLib sgfplib;
+    private JSGFPLib sgfplib;
     
     private Context context;
 	
@@ -86,21 +88,35 @@ public class SecugenPlugin extends CordovaPlugin {
    		}
    	}
    };   
+   
+	/**
+	 * Initialize the Plugin, Cordova handles this.
+	 * 
+	 * @param cordova	Used to get register Handler with the Context accessible from this interface 
+	 * @param view		Passed straight to super's initialization.
+	 */
+	public void initialize(CordovaInterface cordova, CordovaWebView view)
+	{
+		super.initialize(cordova, view);
+		
+		context = cordova.getActivity().getBaseContext();
+	}
+	
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
     	
-    	context = (Context)this.context;
+//    	context = (Context)this.context;
     	
     	//USB Permissions
         mPermissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
        	IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
        	context.registerReceiver(mUsbReceiver, filter);   
 		debugMessage("Getting ACTION_USB_PERMISSION \n");
-//        sgfplib = new JSGFPLib((UsbManager)context.getSystemService(Context.USB_SERVICE));
+        sgfplib = new JSGFPLib((UsbManager)context.getSystemService(Context.USB_SERVICE));
 //    	this.mCheckBoxSCEnabled.setChecked(true);
         
-//		debugMessage("jnisgfplib version: " + sgfplib.Version() + "\n");
+		debugMessage("jnisgfplib version: " + sgfplib.Version() + "\n");
 
         if (action.equals("coolMethod")) {
             String message = args.getString(0);
