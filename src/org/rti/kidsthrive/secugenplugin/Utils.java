@@ -15,11 +15,11 @@ import android.os.Environment;
 import android.util.Log;
 import android.widget.TextView;
 
-public class FileUtils {
+public class Utils {
 
 	// kudos: http://stackoverflow.com/a/8330635
 	
-	String TAG = "FileUtils";
+	String TAG = "Utils";
 
 /** Method to check whether external media available and writable. This is adapted from
    http://developer.android.com/guide/topics/data/data-storage.html#filesExternal */
