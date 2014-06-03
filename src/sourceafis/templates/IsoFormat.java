@@ -144,8 +144,9 @@ public final class IsoFormat extends TemplateFormatBase<byte[]>
         // 4B magic "FMR\0"
         byte[] magic=new byte[4];
         reader.read(magic);
+        String decoded = new String(magic, "UTF-8"); 
         
-        AssertException.Check(new String(magic) .equals("FMR"+NULL), "This is not an ISO template.");
+        AssertException.Check(decoded.equals("FMR"+NULL), "This is not an ISO template.");
 
         // 4B version (ignored, set to " 20\0"
         byte[] version=new byte[4];

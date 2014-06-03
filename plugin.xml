@@ -11,8 +11,14 @@
 <param name="onload" value="true" />
 </feature>
 </config-file>
+<config-file parent="/*" target="platforms/android/res/xml/strings.xml">
+     <string name="templatePath">/sdcard/Download/</string>
+</config-file>
+<source-file src="res/xml/device_filter.xml" target-dir="res/xml" />
 <source-file src="src/org/rti/kidsthrive/secugenplugin/SecugenPlugin.java" target-dir="src/org/rti/kidsthrive/secugenplugin" />
 <source-file src="src/org/rti/kidsthrive/secugenplugin/ScanProperties.java" target-dir="src/org/rti/kidsthrive/secugenplugin" />
+<source-file src="src/org/rti/kidsthrive/secugenplugin/SourceAfisUtils.java" target-dir="src/org/rti/kidsthrive/secugenplugin" />
+<source-file src="src/org/rti/kidsthrive/secugenplugin/Utils.java" target-dir="src/org/rti/kidsthrive/secugenplugin" />
 <source-file src="src/sourceafis/simple/AfisEngine.java" target-dir="src/sourceafis/simple" />
 <source-file src="src/sourceafis/simple/Finger.java" target-dir="src/sourceafis/simple" />
 <source-file src="src/sourceafis/simple/Fingerprint.java" target-dir="src/sourceafis/simple" />
@@ -117,5 +123,6 @@
 <source-file src="src/sourceafis/meta/ParameterSet.java" target-dir="src/sourceafis/meta" />
 <source-file src="src/sourceafis/meta/ParameterValue.java" target-dir="src/sourceafis/meta" />
 <source-file src="libs/FDxSDKProAndroid.jar" target-dir="libs" />
+<source-file src="libs/commons-io-2.4.jar" target-dir="libs" />
 <source-file src="libs/armeabi" target-dir="libs" />
 </platform></plugin>

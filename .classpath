@@ -2,9 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
-	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
-	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
-	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
 	<classpathentry kind="lib" path="libs/FDxSDKProAndroid.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="file:/Users/chrisk/tools/FDx%20SDK%20Pro%20for%20Android%20v1.1/javadoc/"/>
@@ -12,5 +9,17 @@
 	</classpathentry>
 	<classpathentry kind="lib" path="libs/commons-io-2.4.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="/Applications/android-sdk-mac_x86/platforms/android-19/android.jar" sourcepath="/Applications/android-sdk-mac_x86/sources/android-19">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/Applications/android-sdk-mac_x86/docs/reference"/>
+		</attributes>
+		<accessrules>
+			<accessrule kind="nonaccessible" pattern="com/android/internal/**"/>
+		</accessrules>
+	</classpathentry>
+	<classpathentry kind="src" path="/Kidsthrive-CordovaLib"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
+	<classpathentry kind="lib" path="/Users/chrisk/tools/robolectric-2.2-jar-with-dependencies.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

@@ -38,6 +38,7 @@ public class Fingerprint implements Cloneable, Serializable {
 	private Finger fingerPosition;
 	Template decoded;
 	private byte[][] image;
+	private String sourceName;
 
 	/**
 	 * Creates empty Fingerprint object.
@@ -294,5 +295,13 @@ public class Fingerprint implements Cloneable, Serializable {
 		fp.decoded = decoded != null ? decoded.clone() : null;
 		fp.fingerPosition = fingerPosition;
 		return fp;
+	}
+
+	public String getSourceName() {
+		return sourceName;
+	}
+
+	public void setSourceName(String sourceName) {
+		this.sourceName = sourceName;
 	}
 }

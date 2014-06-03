@@ -30,7 +30,7 @@ public class AfisEngine
 {
     private int dpiValue = 500;
     private int minMatches = 1;
-    private float threshold = 25;
+    private float threshold = 12;
     private final ParallelMatcher Matcher = new ParallelMatcher();
     
     /**  
@@ -216,15 +216,15 @@ public class AfisEngine
      */
     public synchronized void extract(Person person) {
 //        throw new UnsupportedOperationException("Template extration is not yet implemted in java version of SourceAFIS");
-    	
-    	for (Fingerprint fp : person.getFingerprints()) {
-//    		TemplateBuilder builder = Extractor.Extract(fp.getImage(), dpiValue);
-    		Extractor extrackor = new Extractor();
-    		TemplateBuilder builder = extrackor.Extract(fp.getImage(), dpiValue);
-//            fp.Decoded = new SerializedFormat().Export(builder);
-            fp.decoded = new SerializedFormat().exportTemplate(builder);
-		}
-    	
+    	synchronized(this) {
+        	for (Fingerprint fp : person.getFingerprints()) {
+//        		TemplateBuilder builder = Extractor.Extract(fp.getImage(), dpiValue);
+        		Extractor extrackor = new Extractor();
+        		TemplateBuilder builder = extrackor.Extract(fp.getImage(), dpiValue);
+//                fp.Decoded = new SerializedFormat().Export(builder);
+                fp.decoded = new SerializedFormat().exportTemplate(builder);
+    		}
+    	}
     }
 
     /**
@@ -402,7 +402,8 @@ public class AfisEngine
                 yield return candidateArray[match.Person];*/
     	List<Person> matches=new ArrayList<Person>();
     	for(BestMatchSkipper.PersonsSkipScore match:results){
-              if(match.score >= threshold) matches.add(candidateArray[match.person]);		
+			System.out.println("match.score:"+ match.score);
+            if(match.score >= threshold) matches.add(candidateArray[match.person]);		
     	}
     	return matches;
     }

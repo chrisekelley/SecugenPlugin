@@ -22,8 +22,8 @@ public class ScanProperties {
 	}
 	
 	public ScanProperties(int mImageWidth, int mImageHeight)  {
-		this.setmImageHeight(300);
-		this.setmImageWidth(260);
+		this.setmImageWidth(mImageWidth);
+		this.setmImageHeight(mImageHeight);
 	}
 
 }

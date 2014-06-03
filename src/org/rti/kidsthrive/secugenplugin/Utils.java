@@ -9,7 +9,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
+import org.apache.cordova.CallbackContext;
+
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+import android.graphics.Bitmap.Config;
+import android.graphics.Canvas;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -79,6 +88,60 @@ private void writeToSDFile(String dir, String filePath, byte[] buffer){
         e.printStackTrace();
     }   
     Log.d(TAG, "\n\nFile written to "+file);
+}
+
+/**
+ * @param callbackContext
+ * @param b
+ * @param fileName TODO
+ */
+public static void saveImageFile(CallbackContext callbackContext, Bitmap b, String fileName) {
+	FileOutputStream out = null;
+    try {
+    	Log.d(SecugenPlugin.TAG, "Saving file to "+ SecugenPlugin.getTemplatePath() + fileName + ".png");
+    	out = new FileOutputStream(SecugenPlugin.getTemplatePath() + fileName + ".png");
+    	b.compress(Bitmap.CompressFormat.PNG, 100, out);
+    	if (callbackContext != null) {
+        	callbackContext.success("Fingerprint scan saved.");
+    	}
+    } catch (Exception e) {
+    	Log.d(SecugenPlugin.TAG, "Error saving file to "+ SecugenPlugin.getTemplatePath() + fileName + ".png. Message: " + e);
+    	e.printStackTrace();
+    } finally {
+    	try{
+    		out.close();
+    	} catch(Throwable ignore) {}
+    }
+}
+
+public static Bitmap toGrayscale(Bitmap bmpOriginal)
+{        
+    int width, height;
+    height = bmpOriginal.getHeight();
+    width = bmpOriginal.getWidth();    
+
+    Bitmap bmpGrayscale = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+    Canvas c = new Canvas(bmpGrayscale);
+    Paint paint = new Paint();
+    ColorMatrix cm = new ColorMatrix();
+    cm.setSaturation(0);
+    ColorMatrixColorFilter f = new ColorMatrixColorFilter(cm);
+    paint.setColorFilter(f);
+    c.drawBitmap(bmpOriginal, 0, 0, paint);
+    return bmpGrayscale;
+}
+
+public static void DumpFile(String fileName, byte[] buffer)
+{
+    try {
+        File myFile = new File(SecugenPlugin.getTemplatePath() + fileName);
+        myFile.createNewFile();
+        FileOutputStream fOut = new FileOutputStream(myFile);
+        fOut.write(buffer,0,buffer.length);
+        fOut.close();
+    } catch (Exception e) {
+    	Log.d(SecugenPlugin.TAG, "Exception when writing file" + fileName);
+    }
 }
 
 /** Method to read in a text file placed in the res/raw directory of the application. The

@@ -2,11 +2,11 @@ package org.rti.kidsthrive.secugenplugin;
 
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
@@ -21,10 +21,7 @@ import sourceafis.simple.Person;
 import SecuGen.FDxSDKPro.JSGFPLib;
 import SecuGen.FDxSDKPro.SGFDxDeviceName;
 import SecuGen.FDxSDKPro.SGFDxErrorCode;
-import SecuGen.FDxSDKPro.SGFDxSecurityLevel;
 import SecuGen.FDxSDKPro.SGFDxTemplateFormat;
-import SecuGen.FDxSDKPro.SGFingerInfo;
-import SecuGen.FDxSDKPro.SGISOTemplateInfo;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -41,10 +38,8 @@ import android.widget.EditText;
  */
 public class SecugenPlugin extends CordovaPlugin {
 	
-	private static final String TAG = "SecuGen USB";
-	private static final String dirPath = "/sdcard/Download/";
-	
-	
+	static final String TAG = "SecuGen USB";
+	private static String templatePath = "/sdcard/Download/fprints/";
 	
 	// actions
     private static final String ACTION_REQUEST_PERMISSION = "requestPermission";
@@ -66,7 +61,6 @@ public class SecugenPlugin extends CordovaPlugin {
     private static final String BLINK = "blink";
     private static final String VERIFY = "verify";
     
-	
 //	private Button mCapture;
 //    private Button mButtonRegister;
 //    private Button mButtonMatch;
@@ -99,8 +93,10 @@ public class SecugenPlugin extends CordovaPlugin {
 	// UsbManager instance to deal with permission and opening
     private UsbManager manager;
     
-    ArrayList<Person> database = null;
-	
+    static ArrayList<Person> database = null;
+    private AfisEngine afis;
+    private ScanProperties props;
+
    
 	/**
 	 * Initialize the Plugin, Cordova handles this.
@@ -113,6 +109,78 @@ public class SecugenPlugin extends CordovaPlugin {
 		super.initialize(cordova, view);
 		
 		context = cordova.getActivity().getBaseContext();
+//
+//	    Properties properties = new Properties();
+//
+//		try {
+//			InputStream rawResource = context.getResources().getValue("");
+////					openRawResource(R.values.strings);
+//			properties.load(rawResource);
+//			System.out.println("The properties are now loaded");
+//			System.out.println("properties: " + properties);
+//		} catch (Resources.NotFoundException e) {
+//			System.err.println("Did not find raw resource: " + e);
+//		} catch (IOException e) {
+//			System.err.println("Failed to open property file");
+//		}
+	    
+//	    	String templatePathTemp = properties.getProperty("templatePath");
+//		System.out.println("context.getApplicationInfo().className: " + context.getApplicationInfo().className);
+		System.out.println("this.cordova.getActivity().getPackageName(): " + this.cordova.getActivity().getPackageName());
+//		int id = context.getResources().getIdentifier("strings", "values", this.cordova.getActivity().getPackageName());
+		int id = context.getResources().getIdentifier("templatePath", "string", this.cordova.getActivity().getPackageName());
+    	System.out.println("templatePath id: " + id);
+    	String translatedValue = context.getResources().getString(id);
+    	System.out.println("translatedValue: " + translatedValue);
+    	
+    	File templatePathFile = new File(templatePath);
+    	templatePathFile.mkdirs();
+    	
+    	// init the database
+    	database=new ArrayList<Person>();
+
+    	/*
+    	 * Create AFIS Engine and set the Threshold
+    	 */
+    	afis = new AfisEngine();
+    	afis.setThreshold(12);
+
+		props = new ScanProperties(mImageWidth, mImageHeight);
+
+    	//		SGISOTemplateInfo isoTemplateInfo = new SGISOTemplateInfo();
+    	//		long result = sgfplib.GetIsoTemplateInfo(mRegisterTemplate, isoTemplateInfo);
+    	//        debugMessage("GetIsoTemplateInfo(mRegisterTemplate) ret:" + result + "\n");
+    	//        debugMessage("   TotalSamples=" + isoTemplateInfo.TotalSamples + "\n");
+    	//        for (int i=0; i<isoTemplateInfo.TotalSamples; ++i){
+    	//	        debugMessage("   Sample[" + i + "].FingerNumber=" + isoTemplateInfo.SampleInfo[i].FingerNumber + "\n");
+    	//	        debugMessage("   Sample[" + i + "].ImageQuality=" + isoTemplateInfo.SampleInfo[i].ImageQuality + "\n");
+    	//	        debugMessage("   Sample[" + i + "].ImpressionType=" + isoTemplateInfo.SampleInfo[i].ImpressionType + "\n");
+    	//	        debugMessage("   Sample[" + i + "].ViewNumber=" + isoTemplateInfo.SampleInfo[i].ViewNumber + "\n");
+    	//        }
+    	
+    	File dir = new File(templatePath);
+    	File[] directoryListing = dir.listFiles();
+
+    	if (directoryListing != null) {
+    		for (File file : directoryListing) {
+    			//				if (!file.getName().equals(".DS_Store")) {
+    			if (".DS_Store".equals(file.getName())) {
+    			} else {
+    				if (file.getName().startsWith("register-sourceafis")) {
+    					System.out.println("file::"+ file.getName());
+    					byte[] fileByte = null;
+    					try {
+    						fileByte = FileUtils.readFileToByteArray(file);
+    						Person person = SourceAfisUtils.newPersonFromTemplate(afis, props, fileByte, file.getName());
+    						database.add(person);
+    					} catch (IOException e) {
+    						// TODO Auto-generated catch block
+    						e.printStackTrace();
+    					}
+    				}
+    			}
+    		}
+    	}
 	}
 	
 //	if (message != null && message.length() > 0) {
@@ -170,11 +238,12 @@ public class SecugenPlugin extends CordovaPlugin {
 	    			debugMessage("GetDeviceInfo() ret: " + error + "\n");
 	    			mImageWidth = deviceInfo.imageWidth;
 	    			mImageHeight= deviceInfo.imageHeight;
-	    			debugMessage("mImageWidth: " + mImageWidth);
-	    			debugMessage("mImageHeight: " + mImageHeight);
-	    			sgfplib.SetTemplateFormat(SGFDxTemplateFormat.TEMPLATE_FORMAT_ISO19794);
+	    			debugMessage("Setting props: mImageWidth: " + mImageWidth + " mImageHeight: " + mImageHeight);
+	    			props = new ScanProperties(mImageWidth, mImageHeight);
+//	    			sgfplib.SetTemplateFormat(SGFDxTemplateFormat.TEMPLATE_FORMAT_ISO19794);
+	    			sgfplib.SetTemplateFormat(SGFDxTemplateFormat.TEMPLATE_FORMAT_SG400);
 	    			sgfplib.GetMaxTemplateSize(mMaxTemplateSize);
-	    			debugMessage("TEMPLATE_FORMAT_ISO19794 SIZE: " + mMaxTemplateSize[0] + "\n");
+	    			debugMessage("TEMPLATE_FORMAT_SG400 SIZE: " + mMaxTemplateSize[0] + "\n");
 	    			mRegisterTemplate = new byte[mMaxTemplateSize[0]];
 	    			mVerifyTemplate = new byte[mMaxTemplateSize[0]];
 	    			sgfplib.writeData((byte)5, (byte)1);
@@ -195,13 +264,13 @@ public class SecugenPlugin extends CordovaPlugin {
     	
     	boolean validAction = true;
     	
-    	// init the database
-    	database=new ArrayList<Person>();
         
     	//USB Permissions
         mPermissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
        	IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
        	context.registerReceiver(mUsbReceiver, filter);
+       	
+       	
 		
 		// request permission
         if (action.equals(ACTION_REQUEST_PERMISSION)) {
@@ -331,7 +400,16 @@ public class SecugenPlugin extends CordovaPlugin {
         ByteBuffer byteBuf = ByteBuffer.allocate(mImageWidth*mImageHeight);
         dwTimeStart = System.currentTimeMillis();          
         long result = sgfplib.GetImage(mRegisterImage);
-        DumpFile("register.raw", mRegisterImage);
+        Utils.DumpFile("register.raw", mRegisterImage);
+        SecuGen.FDxSDKPro.SGDeviceInfoParam deviceInfo = new SecuGen.FDxSDKPro.SGDeviceInfoParam();
+		sgfplib.GetDeviceInfo(deviceInfo);
+        mImageWidth = deviceInfo.imageWidth;
+		mImageHeight= deviceInfo.imageHeight;
+		int dpi = deviceInfo.imageDPI;
+		debugMessage("mImageWidth: " + mImageWidth);
+		debugMessage("mImageHeight: " + mImageHeight);
+		debugMessage("dpi: " + dpi);
+		afis.setDpi(dpi);
         dwTimeEnd = System.currentTimeMillis();
         dwTimeElapsed = dwTimeEnd-dwTimeStart;
         debugMessage("GetImage() ret:" + result + " [" + dwTimeElapsed + "ms]\n");
@@ -341,26 +419,62 @@ public class SecugenPlugin extends CordovaPlugin {
         for (int i=0; i<intbuffer.length; ++i)
         	intbuffer[i] = (int) mRegisterImage[i];
         b.setPixels(intbuffer, 0, mImageWidth, 0, 0, mImageWidth, mImageHeight); 
+        ScanProperties props = createScanProperties(b);
         //DEBUG Log.d(TAG, "Show Register image");
 //        mImageViewFingerprint.setImageBitmap(this.toGrayscale(b));  
-        dwTimeStart = System.currentTimeMillis();          
-        result = sgfplib.SetTemplateFormat(SecuGen.FDxSDKPro.SGFDxTemplateFormat.TEMPLATE_FORMAT_ISO19794);
-        dwTimeEnd = System.currentTimeMillis();
-        dwTimeElapsed = dwTimeEnd-dwTimeStart;
-        debugMessage("SetTemplateFormat(TEMPLATE_FORMAT_ISO19794) ret:" +  result + " [" + dwTimeElapsed + "ms]\n");
-        SGFingerInfo fpInfo = new SGFingerInfo();
-        for (int i=0; i< mRegisterTemplate.length; ++i)
-        	mRegisterTemplate[i] = 0;
-        dwTimeStart = System.currentTimeMillis();          
-        result = sgfplib.CreateTemplate(fpInfo, mRegisterImage, mRegisterTemplate);
-        DumpFile("register.min", mRegisterTemplate);
-        dwTimeEnd = System.currentTimeMillis();
-        dwTimeElapsed = dwTimeEnd-dwTimeStart;
-        debugMessage("CreateTemplate() ret:" + result + " [" + dwTimeElapsed + "ms]\n");
+        Utils.saveImageFile(callbackContext, b, "register-" + System.currentTimeMillis());
+//        dwTimeStart = System.currentTimeMillis();          
+//        result = sgfplib.SetTemplateFormat(SecuGen.FDxSDKPro.SGFDxTemplateFormat.TEMPLATE_FORMAT_ISO19794);
+//        dwTimeEnd = System.currentTimeMillis();
+//        dwTimeElapsed = dwTimeEnd-dwTimeStart;
+//        debugMessage("SetTemplateFormat(TEMPLATE_FORMAT_ISO19794) ret:" +  result + " [" + dwTimeElapsed + "ms]\n");
+//        SGFingerInfo fpInfo = new SGFingerInfo();
+//        for (int i=0; i< mRegisterTemplate.length; ++i)
+//        	mRegisterTemplate[i] = 0;
+//        dwTimeStart = System.currentTimeMillis();          
+//        result = sgfplib.CreateTemplate(fpInfo, mRegisterImage, mRegisterTemplate);
+//        Utils.DumpFile("register.min", mRegisterTemplate);
+//        dwTimeEnd = System.currentTimeMillis();
+//        dwTimeElapsed = dwTimeEnd-dwTimeStart;
+//        debugMessage("CreateTemplate() ret:" + result + " [" + dwTimeElapsed + "ms]\n");
 //        this.mImageViewRegister.setImageBitmap(this.toGrayscale(b));  
 //    	mTextViewResult.setText("Click Verify");
+        
+        dwTimeStart = System.currentTimeMillis();     
+        Bitmap registerBitmap = Utils.toGrayscale(b);
+      //calculate how many bytes our image consists of.
+        int bytes = registerBitmap.getByteCount();
+        //or we can calculate bytes this way. Use a different value than 4 if you don't use 32bit images.
+        //int bytes = b.getWidth()*b.getHeight()*4; 
+
+        ByteBuffer buffer = ByteBuffer.allocate(bytes); //Create a new buffer
+        registerBitmap.copyPixelsToBuffer(buffer); //Move the byte data to the buffer
+
+        byte[] registerArray = buffer.array(); //Get the underlying array containing the data.
+        
+		// seed the database with register
+		Person register = SourceAfisUtils.generateTemplate(afis, props, registerArray, "register-sourceafis" + System.currentTimeMillis() + ".txt");
+
+		// Add person to database
+		//			getDatabase().add(getPerson(1,mRegisterTemplate));
+		database.add(register);
+		dwTimeEnd = System.currentTimeMillis();
+        dwTimeElapsed = dwTimeEnd-dwTimeStart;
+        debugMessage("CreateTemplate() ret:" + result + " [" + dwTimeElapsed + "ms]\n");
+		
         callbackContext.success("Fingerprint registered.");
     }
+
+	/**
+	 * @param b
+	 * @return
+	 */
+	public ScanProperties createScanProperties(Bitmap b) {
+		int width          = b.getWidth();
+		int height         = b.getHeight();
+		ScanProperties props = new ScanProperties(width, height);
+		return props;
+	}
     
     private void capture(CallbackContext callbackContext) {
     	
@@ -370,7 +484,7 @@ public class SecugenPlugin extends CordovaPlugin {
         ByteBuffer byteBuf = ByteBuffer.allocate(mImageWidth*mImageHeight);
         dwTimeStart = System.currentTimeMillis();          
         long result = sgfplib.GetImage(buffer);
-        DumpFile("capture.raw", buffer);
+        Utils.DumpFile("capture.raw", buffer);
         dwTimeEnd = System.currentTimeMillis();
         dwTimeElapsed = dwTimeEnd-dwTimeStart;
         debugMessage("getImage() ret:" + result + " [" + dwTimeElapsed + "ms]\n");
@@ -385,23 +499,10 @@ public class SecugenPlugin extends CordovaPlugin {
         b.setPixels(intbuffer, 0, mImageWidth, 0, 0, mImageWidth, mImageHeight);
         //DEBUG Log.d(TAG, "Show image");
 //        mImageViewFingerprint.setImageBitmap(this.toGrayscale(b));  
-        FileOutputStream out = null;
-        try {
-        	Log.d(TAG, "Saving file to "+ dirPath + "capture.png");
-        	out = new FileOutputStream(dirPath + "capture.png");
-        	b.compress(Bitmap.CompressFormat.PNG, 90, out);
-        	callbackContext.success("Fingerprint scan saved.");
-        } catch (Exception e) {
-        	Log.d(TAG, "Error saving file to "+ dirPath + "capture.png. Message: " + e);
-        	e.printStackTrace();
-        } finally {
-        	try{
-        		out.close();
-        	} catch(Throwable ignore) {}
-        }
+        Utils.saveImageFile(callbackContext, b, "current-" + System.currentTimeMillis());
     }
-    
-    private void blink(CallbackContext callbackContext) {
+
+	private void blink(CallbackContext callbackContext) {
 //    	this.mCheckBoxMatched.setChecked(false);
     	mLed = !mLed;
         dwTimeStart = System.currentTimeMillis();          
@@ -421,7 +522,16 @@ public class SecugenPlugin extends CordovaPlugin {
         ByteBuffer byteBuf = ByteBuffer.allocate(mImageWidth*mImageHeight);
         dwTimeStart = System.currentTimeMillis();          
         long result = sgfplib.GetImage(mVerifyImage);
-        DumpFile("verify.raw", mVerifyImage);
+        Utils.DumpFile("verify.raw", mVerifyImage);
+        SecuGen.FDxSDKPro.SGDeviceInfoParam deviceInfo = new SecuGen.FDxSDKPro.SGDeviceInfoParam();
+		sgfplib.GetDeviceInfo(deviceInfo);
+        mImageWidth = deviceInfo.imageWidth;
+		mImageHeight= deviceInfo.imageHeight;
+		int dpi = deviceInfo.imageDPI;
+		debugMessage("mImageWidth: " + mImageWidth);
+		debugMessage("mImageHeight: " + mImageHeight);
+		debugMessage("dpi: " + dpi);
+		afis.setDpi(dpi);
         dwTimeEnd = System.currentTimeMillis();
         dwTimeElapsed = dwTimeEnd-dwTimeStart;
         debugMessage("GetImage() ret:" + result + " [" + dwTimeElapsed + "ms]\n");
@@ -431,124 +541,60 @@ public class SecugenPlugin extends CordovaPlugin {
         for (int i=0; i<intbuffer.length; ++i)
         	intbuffer[i] = (int) mVerifyImage[i];
         b.setPixels(intbuffer, 0, mImageWidth, 0, 0, mImageWidth, mImageHeight); 
+        Utils.saveImageFile(callbackContext, b, "verify-" + System.currentTimeMillis());
         //DEBUG Log.d(TAG, "Show Verify image");
 //        mImageViewFingerprint.setImageBitmap(this.toGrayscale(b));  
 //        this.mImageViewVerify.setImageBitmap(this.toGrayscale(b)); 
-        dwTimeStart = System.currentTimeMillis();          
-        result = sgfplib.SetTemplateFormat(SecuGen.FDxSDKPro.SGFDxTemplateFormat.TEMPLATE_FORMAT_ISO19794);
-        dwTimeEnd = System.currentTimeMillis();
-        dwTimeElapsed = dwTimeEnd-dwTimeStart;
-        debugMessage("SetTemplateFormat(TEMPLATE_FORMAT_ISO19794) ret:" +  result + " [" + dwTimeElapsed + "ms]\n");
-        SGFingerInfo fpInfo = new SGFingerInfo();
-        for (int i=0; i< mVerifyTemplate.length; ++i)
-        	mVerifyTemplate[i] = 0;
-        dwTimeStart = System.currentTimeMillis();          
-        result = sgfplib.CreateTemplate(fpInfo, mVerifyImage, mVerifyTemplate);
-        DumpFile("verify.min", mVerifyTemplate);
-        dwTimeEnd = System.currentTimeMillis();
-        dwTimeElapsed = dwTimeEnd-dwTimeStart;
-        debugMessage("CreateTemplate() ret:" + result+ " [" + dwTimeElapsed + "ms]\n");
-        boolean[] matched = new boolean[1];
-        dwTimeStart = System.currentTimeMillis();          
-        result = sgfplib.MatchTemplate(mRegisterTemplate, mVerifyTemplate, SGFDxSecurityLevel.SL_NORMAL, matched);
-        dwTimeEnd = System.currentTimeMillis();
-        dwTimeElapsed = dwTimeEnd-dwTimeStart;
-        debugMessage("MatchTemplate() ret:" + result+ " [" + dwTimeElapsed + "ms]\n");
-        if (matched[0]) {
-//        	mTextViewResult.setText("MATCHED!\n");
-//        	this.mCheckBoxMatched.setChecked(true);
-        	callbackContext.success("MATCHED!");
-            debugMessage("MATCHED!\n");
-            Log.d("Secugen Activity", "Matched!");
-        }
-        else {
-        	callbackContext.success("NOT MATCHED!");
-//        	this.mCheckBoxMatched.setChecked(false);
-            debugMessage("NOT MATCHED!\n");
-        }
-        /*
-	     * Create AFIS Engine and set the Threshold
-	     */
-		AfisEngine afis = new AfisEngine();
-		afis.setThreshold(25);
-		
-		SGISOTemplateInfo isoTemplateInfo = new SGISOTemplateInfo();
-		result = sgfplib.GetIsoTemplateInfo(mRegisterTemplate, isoTemplateInfo);
-        debugMessage("GetIsoTemplateInfo(mRegisterTemplate) ret:" + result + "\n");
-        debugMessage("   TotalSamples=" + isoTemplateInfo.TotalSamples + "\n");
-        for (int i=0; i<isoTemplateInfo.TotalSamples; ++i){
-	        debugMessage("   Sample[" + i + "].FingerNumber=" + isoTemplateInfo.SampleInfo[i].FingerNumber + "\n");
-	        debugMessage("   Sample[" + i + "].ImageQuality=" + isoTemplateInfo.SampleInfo[i].ImageQuality + "\n");
-	        debugMessage("   Sample[" + i + "].ImpressionType=" + isoTemplateInfo.SampleInfo[i].ImpressionType + "\n");
-	        debugMessage("   Sample[" + i + "].ViewNumber=" + isoTemplateInfo.SampleInfo[i].ViewNumber + "\n");
-        }
-        
-		ScanProperties props = new ScanProperties(mImageWidth, mImageHeight);
+//        SGFingerInfo fpInfo = new SGFingerInfo();
+//        for (int i=0; i< mVerifyTemplate.length; ++i)
+//        	mVerifyTemplate[i] = 0;
+//        dwTimeStart = System.currentTimeMillis();          
+//        result = sgfplib.CreateTemplate(fpInfo, mVerifyImage, mVerifyTemplate);
+//        Utils.DumpFile("verify.min", mVerifyTemplate);
+//        dwTimeEnd = System.currentTimeMillis();
+//        dwTimeElapsed = dwTimeEnd-dwTimeStart;
+//        debugMessage("CreateTemplate() ret:" + result+ " [" + dwTimeElapsed + "ms]\n");
+//        boolean[] matched = new boolean[1];
+//        dwTimeStart = System.currentTimeMillis();          
+//        result = sgfplib.MatchTemplate(mRegisterTemplate, mVerifyTemplate, SGFDxSecurityLevel.SL_NORMAL, matched);
+//        dwTimeEnd = System.currentTimeMillis();
+//        dwTimeElapsed = dwTimeEnd-dwTimeStart;
+//        debugMessage("MatchTemplate() ret:" + result+ " [" + dwTimeElapsed + "ms]\n");
+//        if (matched[0]) {
+////        	mTextViewResult.setText("MATCHED!\n");
+////        	this.mCheckBoxMatched.setChecked(true);
+//        	callbackContext.success("MATCHED!");
+//            debugMessage("MATCHED!\n");
+//            Log.d("Secugen Activity", "Matched!");
+//        }
+//        else {
+//        	callbackContext.success("NOT MATCHED!");
+////        	this.mCheckBoxMatched.setChecked(false);
+//            debugMessage("NOT MATCHED!\n");
+//        }
 
-        identify(afis, props, mRegisterImage);
+        Bitmap bitmap = Utils.toGrayscale(b);
+        //calculate how many bytes our image consists of.
+        int bytes = bitmap.getByteCount();
+        ByteBuffer buffer = ByteBuffer.allocate(bytes); //Create a new buffer
+        bitmap.copyPixelsToBuffer(buffer); //Move the byte data to the buffer
+
+        byte[] array = buffer.array(); //Get the underlying array containing the data.
+
+//        boolean isMached = SourceAfisUtils.identify(afis, props, mRegisterImage, mVerifyImage, database);
+		Person probe = SourceAfisUtils.generateTemplate(afis, props, array, "verify-sourceafis" + System.currentTimeMillis() + ".txt");
+        boolean isMached = SourceAfisUtils.identify(afis, props, array, database, probe);
+        if (isMached) {
+        	callbackContext.success("MATCHED AFIS!");
+            debugMessage("MATCHED AFIS\n");
+        } else {
+        	callbackContext.success("NO MATCH AFIS");
+            debugMessage("NO MATCH AFIS!\n");
+        }
 		
     }
 
-	/**
-	 * Use SourceAFIS to identify the fingerprint.
-	 * @param afis
-	 * @param props height and width of image.
-	 * kudos for 2d conversion: http://stackoverflow.com/q/18586813
-	 */
-	public static void identify(AfisEngine afis, ScanProperties props, byte[] mRegisterImage) {
-
-		int height = props.getmImageHeight();
-		int width = props.getmImageWidth();
-		byte [][] image = new byte[width][height];
-		//here is the main logic to convert 1D to 2D
-		int x=0;
-		for(int i=0;i<width;i++)
-		{
-		    for(int j=0;j<height;j++)
-		    {
-		        image[i][j] = mRegisterImage[x];
-		        x++;
-		    }
-		}
-		
-		Fingerprint fingerprint = new Fingerprint();
-        try {
-//			fingerprint.setImage(new byte[][]{mRegisterImage});
-			fingerprint.setImage(image);
-		} catch (Exception e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-        Person person = new Person(fingerprint);
-        afis.extract(person);
-        
-        byte[] template = fingerprint.getIsoTemplate();
-        DumpFile("register-sourceafis.txt", template);
-//		
-//		// Add person to database
-//		try {
-//			database.add(getPerson(1,mRegisterTemplate));
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		
-//		/*giving dummy id -1 for probe*/
-//		Person probe = null;
-//		try {
-//			probe = getPerson(-1,new byte[][]{mVerifyTemplate});
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		Iterable<Person> matches=afis.identify(probe, database);
-//		
-//		for(Person match:matches){
-//			System.out.println("Matched::"+match.getId());
-//		}
-	}
-    
-    /*
+	/*
 	 * Utility function to create a person from finger print template.
 	 */
 	static Person getPerson(int id,byte[][] template) throws IOException {
@@ -571,20 +617,6 @@ public class SecugenPlugin extends CordovaPlugin {
 		return p;
 	}
     
-    public static void DumpFile(String fileName, byte[] buffer)
-    {
-    	//Uncomment section below to dump images and templates to SD card
-        try {
-            File myFile = new File("/sdcard/Download/" + fileName);
-            myFile.createNewFile();
-            FileOutputStream fOut = new FileOutputStream(myFile);
-            fOut.write(buffer,0,buffer.length);
-            fOut.close();
-        } catch (Exception e) {
-        	Log.d(TAG, "Exception when writing file" + fileName);
-        }
-    } 
-
     private void debugMessage(String message) {
     	//      this.mEditLog.append(message);
     	//      this.mEditLog.invalidate(); //TODO trying to get Edit log to update after each line written
@@ -646,5 +678,21 @@ public class SecugenPlugin extends CordovaPlugin {
     	sgfplib.Close();
         super.onDestroy();
     }
+    
+    public static ArrayList<Person> getDatabase() {
+		return database;
+	}
+
+	public static void setDatabase(ArrayList<Person> database) {
+		SecugenPlugin.database = database;
+	}
+
+	public static String getTemplatePath() {
+		return templatePath;
+	}
+
+	public static void setTemplatePath(String templatePath) {
+		SecugenPlugin.templatePath = templatePath;
+	}
 
 }

@@ -122,17 +122,17 @@ public class Extractor {
 			@Override
 			public void function() {
 				byte[][] image = ImageInverter.GetInverted(invertedImage);
-				DetailLogger.log2D(image, "image_j.csv");
+//				DetailLogger.log2D(image, "image_j.csv");
 
 				BlockMap blocks = new BlockMap(new Size(image[0].length,
 						image.length), BlockSize);
-				Logger.log("BlockMap", blocks);
+//				Logger.log("BlockMap", blocks);
 
 				short[][][] histogram = Histogram.Analyze(blocks, image);
-				DetailLogger.log3D(histogram, "hist_j.csv");
+//				DetailLogger.log3D(histogram, "hist_j.csv");
 				short[][][] smoothHistogram = Histogram.SmoothAroundCorners(
 						blocks, histogram);
-				DetailLogger.log3D(smoothHistogram, "smhist_j.csv");
+//				DetailLogger.log3D(smoothHistogram, "smhist_j.csv");
 				BinaryMap mask = Mask.ComputeMask(blocks, histogram);
 				float[][] equalized = Equalizer.Equalize(blocks, image,
 						smoothHistogram, mask);
@@ -149,7 +149,7 @@ public class Extractor {
 
 				binary.AndNot(BinarySmoother.Filter(binary.GetInverted()));
 				binary.Or(BinarySmoother.Filter(binary));
-				Logger.log("BinarySmoothingResult", binary);
+//				Logger.log("BinarySmoothingResult", binary);
 				CrossRemover.Remove(binary);
 
 				BinaryMap pixelMask = mask.FillBlocks(blocks);
@@ -175,7 +175,7 @@ public class Extractor {
 				MinutiaCloudRemover.Filter(template);
 				UniqueMinutiaSorter.Filter(template);
 				MinutiaSorter.Shuffle(template);
-				Logger.log("FinalTemplate", template);
+//				Logger.log("FinalTemplate", template);
 			}
 		});
 		System.out.println("End: " + df.format(new Date()));
