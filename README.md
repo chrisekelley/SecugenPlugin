@@ -4,6 +4,10 @@ This plugin is for Phonegap/Cordova 3.x.
 
 I'm not distributing the FDxSDKProAndroid.jar and its supporting armeabi dir - you must add those yourself and un-comment the relevant code.
 
+This branch uses the Java port of [SourceAFIS](http://www.sourceafis.org/blog/) to process fingerprints. It is buggy and is not supported.
+
+[Kiwi-Cordova](https://github.com/chrisekelley/kiwi-cordova) is a Cordova project that implements this plugin.
+
 # Installation
 
 I have not yet uploaded this to NPM, so you must clone this project and install it using the following commands:
