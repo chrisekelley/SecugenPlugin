@@ -4,6 +4,10 @@ This plugin is for Phonegap/Cordova 3.x.
 
 I'm not distributing the FDxSDKProAndroid.jar and its supporting armeabi dir - you must add those yourself and un-comment the relevant code.
 
+This version uses a REST client to upload fingerprint images for templating and identification.
+
+[Kiwi-Cordova](https://github.com/chrisekelley/kiwi-cordova) is a Cordova project that implements this plugin.
+
 # Installation
 
 I have not yet uploaded this to NPM, so you must clone this project and install it using the following commands:
