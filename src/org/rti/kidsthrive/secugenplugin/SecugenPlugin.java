@@ -284,9 +284,9 @@ public class SecugenPlugin extends CordovaPlugin {
 
     	}
 
-    	PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
-    	result.setKeepCallback(true);
-    	callbackContext.sendPluginResult(result);
+//    	PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
+//    	result.setKeepCallback(true);
+//    	callbackContext.sendPluginResult(result);
 
     	return validAction;
     }
@@ -406,7 +406,10 @@ public class SecugenPlugin extends CordovaPlugin {
 			    	String uploadMessage = "";
 			        try {
 			        	uploadMessage = Utils.upload(outputFilename);
+			        	PluginResult result = new PluginResult(PluginResult.Status.OK, uploadMessage);
+			        	result.setKeepCallback(true);
 						callbackContext.success("Scan uploaded: " + uploadMessage);
+			        	callbackContext.sendPluginResult(result);
 			        } catch (Exception e) {
 			            e.printStackTrace();
 			            callbackContext.error("Upload Error: " + uploadMessage + " Error: " + e);

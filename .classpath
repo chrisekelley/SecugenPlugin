@@ -8,6 +8,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="libs/commons-io-2.4.jar"/>
+	<classpathentry kind="lib" path="libs/httpmime-4.3.4.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="/Applications/android-sdk-mac_x86/platforms/android-19/android.jar" sourcepath="/Applications/android-sdk-mac_x86/sources/android-19">
 		<attributes>

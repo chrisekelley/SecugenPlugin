@@ -1,6 +1,5 @@
 package org.rti.kidsthrive.secugenplugin;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -9,26 +8,28 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 import org.apache.cordova.CallbackContext;
-import org.apache.cordova.LOG;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 
-import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
-import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
-import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
-import android.widget.TextView;
 
 public class Utils {
 
@@ -111,9 +112,9 @@ public class Utils {
 			Log.d(SecugenPlugin.TAG, "Saving file to " + outputPath);
 			out = new FileOutputStream(outputPath);
 			b.compress(Bitmap.CompressFormat.PNG, 100, out);
-			if (callbackContext != null) {
-				callbackContext.success("Fingerprint scan saved.");
-			}
+//			if (callbackContext != null) {
+//				callbackContext.success("Fingerprint scan saved.");
+//			}
 		} catch (Exception e) {
 			Log.d(SecugenPlugin.TAG, "Error saving file to "+ outputPath + ". Message: " + e);
 			e.printStackTrace();
@@ -185,15 +186,41 @@ public class Utils {
 	//    }
 	//    Log.d(TAG, "\n\nThat is all");
 	//}
+	
+	// kudos: http://stackoverflow.com/questions/18964288/upload-a-file-through-an-http-form-via-multipartentitybuilder-with-a-progress
+	public static String upload(String filename) throws IOException {
+		String message = "";
+		String pathToOurFile = SecugenPlugin.getTemplatePath() + filename;
+		String urlServer = SecugenPlugin.getServerUrl() + SecugenPlugin.getServerUrlFilepath();
+		HttpClient client = new DefaultHttpClient();
+//		CloseableHttpClient client = HttpClientBuilder.create().build();
+		HttpPost post = new HttpPost(urlServer);
+		MultipartEntityBuilder builder = MultipartEntityBuilder.create();   
+		/* example for setting a HttpMultipartMode */
+		builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+		builder.addPart("file", new FileBody(new File(pathToOurFile)));
+		post.setEntity(builder.build());
+		HttpResponse response = client.execute(post);
+	    HttpEntity entity = response.getEntity();
+	    message = response.getStatusLine().toString();  // CONSIDER  Detect server complaints
+//	    InputStream is = entity.getContent();
+	    String responseBody = EntityUtils.toString(entity);
+//	    EntityUtils.consume(entity);
+	    entity.consumeContent();
+//	    client.close();
+	    client.getConnectionManager().shutdown(); 
+		
+		return responseBody;
+	}
 
 	// kudos: http://stunningco.de/2010/04/25/uploading-files-to-http-server-using-post-android-sdk/
-	public static String upload(String filename) throws IOException {
+	public static String uploadOld(String filename) throws IOException {
 		String message = "";
 		HttpURLConnection connection = null;
 		DataOutputStream outputStream = null;
 		DataInputStream inputStream = null;
 		String pathToOurFile = SecugenPlugin.getTemplatePath() + filename;
-		String urlServer = SecugenPlugin.getServerUrl() + SecugenPlugin.getServerUrlFilepath() + filename;
+		String urlServer = SecugenPlugin.getServerUrl() + SecugenPlugin.getServerUrlFilepath();
 		String lineEnd = "\r\n";
 		String twoHyphens = "--";
 		String boundary =  "*****";
