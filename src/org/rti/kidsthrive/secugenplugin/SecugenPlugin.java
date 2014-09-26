@@ -66,6 +66,7 @@ public class SecugenPlugin extends CordovaPlugin {
     private static final String CLEAR = "clear";
     private static final String COOLMETHOD = "coolMethod";
     private static final String REGISTER = "register";
+    private static final String IDENTIFY = "identify";
     private static final String CAPTURE = "capture";
     private static final String BLINK = "blink";
     private static final String VERIFY = "verify";
@@ -206,6 +207,18 @@ public class SecugenPlugin extends CordovaPlugin {
     		cordova.getActivity().runOnUiThread(new Runnable() {
     			public void run() {
     				register(callbackContext);
+    			}
+    		});
+    		return true;
+    		
+    	} else if (action.equals(IDENTIFY)) {
+    		
+    		//          listBondedDevices(callbackContext);
+    		//        	register(callbackContext);
+    		
+    		cordova.getActivity().runOnUiThread(new Runnable() {
+    			public void run() {
+    				identify(callbackContext);
     			}
     		});
     		return true;
@@ -401,11 +414,30 @@ public class SecugenPlugin extends CordovaPlugin {
     
     private void register(final CallbackContext callbackContext) {
         debugMessage("Clicked REGISTER\n");
-        if (mRegisterImage != null)
+        int[] templateSize = captureImageTemplate();
+//		UUID uuid = UUID.randomUUID();
+		String urlServer = SecugenPlugin.getServerUrl() + SecugenPlugin.getServerUrlFilepath() + "Enroll";
+		buildUploadMessage(callbackContext, templateSize, urlServer);
+        createImageFile(callbackContext);
+    }
+    
+    private void identify(final CallbackContext callbackContext) {
+    	debugMessage("Clicked identify\n");
+    	int[] templateSize = captureImageTemplate();
+//		UUID uuid = UUID.randomUUID();
+    	String urlServer = SecugenPlugin.getServerUrl() + SecugenPlugin.getServerUrlFilepath() + "Identify";
+    	buildUploadMessage(callbackContext, templateSize, urlServer);
+    	createImageFile(callbackContext);
+    }
+
+	/**
+	 * @return
+	 */
+	public int[] captureImageTemplate() {
+		if (mRegisterImage != null)
         	mRegisterImage = null;
         mRegisterImage = new byte[mImageWidth*mImageHeight];
 //    	this.mCheckBoxMatched.setChecked(false);
-        ByteBuffer byteBuf = ByteBuffer.allocate(mImageWidth*mImageHeight);
         dwTimeStart = System.currentTimeMillis();          
         long result = sgfplib.GetImage(mRegisterImage);
         Utils.DumpFile("register" + System.currentTimeMillis() +".raw", mRegisterImage);
@@ -424,13 +456,7 @@ public class SecugenPlugin extends CordovaPlugin {
         dwTimeStart = System.currentTimeMillis();
         
         // Create template from captured image
-        // Set information about template
         SGFingerInfo finger_info = new SGFingerInfo();
-//        int[] quality = new int[1];
-//        finger_info.FingerNumber = SGFingerPosition.SG_FINGPOS_UK ;
-//        finger_info.ImageQuality = quality[0] ;
-//        finger_info.ImpressionType = SGImpressionType.SG_IMPTYPE_LP;
-//        finger_info.ViewNumber = 1;
         debugMessage("CreateTemplate() started \n");
         for (int i=0; i< mRegisterTemplate.length; ++i)
         	mRegisterTemplate[i] = 0;
@@ -444,34 +470,22 @@ public class SecugenPlugin extends CordovaPlugin {
         String templatefileName = "register.template-" + System.currentTimeMillis() + ".txt";
         Utils.DumpFile(templatefileName, mRegisterTemplate);
         final String templatePath = SecugenPlugin.getTemplatePath() + templatefileName;
-        
-		
-		final JSONObject jo = new JSONObject();
-//		UUID uuid = UUID.randomUUID();
-		String templateString = "";
-//		try {
-//			templateString = new String(mRegisterTemplate, "UTF-8");
-//		} catch (UnsupportedEncodingException e2) {
-//			// TODO Auto-generated catch block
-//			e2.printStackTrace();
-//		}
-		
-//		templateString = Utils.bytesToHex(mRegisterTemplate);
-//		templateString = Hex.encodeHexString(mRegisterTemplate);
-//		char[] encodeHexTemplate = Utils.encodeHex(mRegisterTemplate, Utils.DIGITS_UPPER);
-//		templateString = Utils.encodeHexToString(mRegisterTemplate, Utils.DIGITS_UPPER);
-//		Log.d(TAG, "encodeHexTemplate: " + encodeHexTemplate.toString());
-//		for (char c : encodeHexTemplate) {
-//			Log.d(TAG, "output: " + c);
-//			templateString = templateString + c + " ";
-//		}
-		
+		return templateSize;
+	}
+
+	/**
+	 * @param callbackContext
+	 * @param templateSize
+	 * @param url TODO
+	 */
+	public void buildUploadMessage(final CallbackContext callbackContext,
+			int[] templateSize, final String url) {
+		String templateString;
 		byte[] newTemplate = Arrays.copyOfRange(mRegisterTemplate, 0, templateSize[0]);
 		templateString = Utils.encodeHexToString(newTemplate, Utils.DIGITS_UPPER);
 		Log.d(TAG, "templateString: " + templateString);
-
-//		templateString = new String(encodeHex);
 		
+		final JSONObject jo = new JSONObject();
 		try {
 			jo.put("Key", SecugenPlugin.getServerKey());
 			jo.put("Name", "Test CK");
@@ -491,10 +505,10 @@ public class SecugenPlugin extends CordovaPlugin {
 			    public void run() {
 			    	String uploadMessage = "";
 			        try {
-			        	uploadMessage = Utils.post(jo);
+			        	uploadMessage = Utils.post(jo, url);
 			        	PluginResult result = new PluginResult(PluginResult.Status.OK, uploadMessage);
 			        	result.setKeepCallback(true);
-						callbackContext.success("Scan uploaded: " + uploadMessage);
+						callbackContext.success(uploadMessage);
 			        	callbackContext.sendPluginResult(result);
 			        } catch (Exception e) {
 			            e.printStackTrace();
@@ -506,16 +520,13 @@ public class SecugenPlugin extends CordovaPlugin {
 		dwTimeEnd = System.currentTimeMillis();
         dwTimeElapsed = dwTimeEnd-dwTimeStart;
         debugMessage("uploadMessage() ret:" + uploadMessage + " [" + dwTimeElapsed + "ms]\n");
-        
-        createImageFile(callbackContext, byteBuf);
-    }
+	}
 
 	/**
 	 * @param callbackContext
-	 * @param byteBuf
 	 */
-	public void createImageFile(final CallbackContext callbackContext,
-			ByteBuffer byteBuf) {
+	public void createImageFile(final CallbackContext callbackContext) {
+        ByteBuffer byteBuf = ByteBuffer.allocate(mImageWidth*mImageHeight);
 		Bitmap b = Bitmap.createBitmap(mImageWidth,mImageHeight, Bitmap.Config.ARGB_8888);
         byteBuf.put(mRegisterImage);
         int[] intbuffer = new int[mImageWidth*mImageHeight];

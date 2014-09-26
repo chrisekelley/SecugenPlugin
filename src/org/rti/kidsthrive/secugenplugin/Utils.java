@@ -221,8 +221,7 @@ public class Utils {
 		return responseBody;
 	}
 	
-	public static String post(JSONObject payload) throws IOException {
-		String urlServer = SecugenPlugin.getServerUrl() + SecugenPlugin.getServerUrlFilepath();
+	public static String post(JSONObject payload, String urlServer) throws IOException {
 		Log.d(TAG, "urlServer: "+"    "+urlServer);
 		HttpClient client = new DefaultHttpClient();
 //		CloseableHttpClient client = HttpClientBuilder.create().build();
