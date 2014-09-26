@@ -508,7 +508,7 @@ public class SecugenPlugin extends CordovaPlugin {
 			        	uploadMessage = Utils.post(jo, url);
 			        	PluginResult result = new PluginResult(PluginResult.Status.OK, uploadMessage);
 			        	result.setKeepCallback(true);
-						callbackContext.success(uploadMessage);
+//						callbackContext.success(uploadMessage);
 			        	callbackContext.sendPluginResult(result);
 			        } catch (Exception e) {
 			            e.printStackTrace();
