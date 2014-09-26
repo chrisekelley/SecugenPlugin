@@ -238,7 +238,7 @@ public class Utils {
 	    post.setHeader("Content-type", "application/json");
 //	    String authorizationString = "Basic " + Base64.encodeToString(("chris" + ":" + "chris").getBytes(), Base64.DEFAULT); //this line is diffe
 //	    post.setHeader("Authorization", authorizationString);
-	    post.addHeader(BasicScheme.authenticate(new UsernamePasswordCredentials("chris", "chris"), "UTF-8", false));
+//	    post.addHeader(BasicScheme.authenticate(new UsernamePasswordCredentials("chris", "chris"), "UTF-8", false));
 
 
 	    //Handles what is returned from the page 
@@ -341,6 +341,100 @@ public class Utils {
 	        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
 	    }
 	    return new String(hexChars);
+	}
+	
+	 /**
+	  * 
+	  * kudos: Apache Commons Codec 1.6
+	  * 
+	  */
+	
+
+    /**
+     * Used to build output as Hex
+     */
+	public static final char[] DIGITS_LOWER = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+    /**
+     * Used to build output as Hex
+     */
+    public static final char[] DIGITS_UPPER = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+	
+    /**
+     * Converts an array of bytes into an array of characters representing the hexadecimal values of each byte in order.
+     * The returned array will be double the length of the passed array, as it takes two characters to represent any
+     * given byte.
+     * 
+     * @param data
+     *            a byte[] to convert to Hex characters
+     * @return A char[] containing hexadecimal characters
+     */
+    public static char[] encodeHex(byte[] data) {
+        return encodeHex(data, true);
+    }
+
+    /**
+     * Converts an array of bytes into an array of characters representing the hexadecimal values of each byte in order.
+     * The returned array will be double the length of the passed array, as it takes two characters to represent any
+     * given byte.
+     * 
+     * @param data
+     *            a byte[] to convert to Hex characters
+     * @param toLowerCase
+     *            <code>true</code> converts to lowercase, <code>false</code> to uppercase
+     * @return A char[] containing hexadecimal characters
+     * @since 1.4
+     */
+    public static char[] encodeHex(byte[] data, boolean toLowerCase) {
+        return encodeHex(data, toLowerCase ? DIGITS_LOWER : DIGITS_UPPER);
+    }
+	
+	
+	 /**
+     * Converts an array of bytes into an array of characters representing the hexadecimal values of each byte in order.
+     * The returned array will be double the length of the passed array, as it takes two characters to represent any
+     * given byte.
+     * 
+     * @param data
+     *            a byte[] to convert to Hex characters
+     * @param toDigits
+     *            the output alphabet
+     * @return A char[] containing hexadecimal characters
+     * @since 1.4
+     */
+	public static char[] encodeHex(byte[] data, char[] toDigits) {
+        int l = data.length;
+        char[] out = new char[l << 1];
+        // two characters form the hex value.
+        for (int i = 0, j = 0; i < l; i++) {
+            out[j++] = toDigits[(0xF0 & data[i]) >>> 4];
+            out[j++] = toDigits[0x0F & data[i]];
+        }
+        return out;
+    }
+	
+	/**
+	 * Converts an array of bytes into an array of characters representing the hexadecimal values of each byte in order.
+	 * The returned array will be double the length of the passed array, as it takes two characters to represent any
+	 * given byte.
+	 * 
+	 * @param data
+	 *            a byte[] to convert to Hex characters
+	 * @param toDigits
+	 *            the output alphabet
+	 * @return A char[] containing hexadecimal characters
+	 * @since 1.4
+	 */
+	public static String encodeHexToString(byte[] data, char[] toDigits) {
+		int l = data.length;
+		String out = "";
+		// two characters form the hex value.
+		for (int i = 0, j = 0; i < l; i++) {
+			out = out + toDigits[(0xF0 & data[i]) >>> 4];
+			out = out + toDigits[0x0F & data[i]];
+			out = out + " ";
+		}
+		return out;
 	}
 
 }
