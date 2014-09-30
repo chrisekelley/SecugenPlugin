@@ -27,6 +27,7 @@ import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.graphics.Bitmap;
@@ -221,7 +222,7 @@ public class Utils {
 		return responseBody;
 	}
 	
-	public static ServiceResponse post(JSONObject payload, String urlServer) throws IOException {
+	public static JSONObject post(JSONObject payload, String urlServer) throws IOException {
 		Log.d(TAG, "urlServer: "+"    "+urlServer);
 		HttpClient client = new DefaultHttpClient();
 //		CloseableHttpClient client = HttpClientBuilder.create().build();
@@ -238,15 +239,35 @@ public class Utils {
 //	    String authorizationString = "Basic " + Base64.encodeToString(("chris" + ":" + "chris").getBytes(), Base64.DEFAULT); //this line is diffe
 //	    post.setHeader("Authorization", authorizationString);
 //	    post.addHeader(BasicScheme.authenticate(new UsernamePasswordCredentials("chris", "chris"), "UTF-8", false));
-	    ServiceResponse serviceRespose = new ServiceResponse();
-	    serviceRespose.setScannerPayload(payload);
+
 	    //Handles what is returned from the page 
 	    ResponseHandler<String> responseHandler = new BasicResponseHandler();
 	    String responseBody = client.execute(post, responseHandler);
-	    serviceRespose.setServiceMessage(responseBody);
+		Log.d(TAG, "responseBody from service: "+"    "+responseBody);
+		JSONObject responseBodyJo = null;
+		try {
+			responseBodyJo = new JSONObject(responseBody);
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+//		Log.d(TAG, "responseBodyJo: "+"    "+responseBodyJo.toString());
+//	    ServiceResponse serviceResponse = new ServiceResponse();
+//	    serviceResponse.setScannerPayload(payload);
+//	    serviceResponse.setServiceMessage(responseBodyJo);
+		JSONObject serviceResponse = new JSONObject();
+		try {
+			serviceResponse.put("scannerPayload", payload);
+			serviceResponse.put("serviceMessage", responseBodyJo);
+//			Log.d(TAG, "serviceResponse.get(scannerPayload).toString(): "+"    "+serviceResponse.get("scannerPayload").toString());
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		se.consumeContent();
 		client.getConnectionManager().shutdown();
-		return serviceRespose;
+//		Log.d(TAG, "serviceResponse.toString(): "+"    "+serviceResponse.toString());
+		return serviceResponse;
 	}
 
 	// kudos: http://stunningco.de/2010/04/25/uploading-files-to-http-server-using-post-android-sdk/

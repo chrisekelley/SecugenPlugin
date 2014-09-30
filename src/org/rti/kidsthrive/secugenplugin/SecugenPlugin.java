@@ -503,16 +503,18 @@ public class SecugenPlugin extends CordovaPlugin {
 			Thread thread = new Thread(new Runnable(){
 			    @Override
 			    public void run() {
-			    	ServiceResponse uploadMessage = new ServiceResponse();
+			    	JSONObject serviceResponse = null;
 			        try {
-			        	uploadMessage = Utils.post(jo, url);
-			        	PluginResult result = new PluginResult(PluginResult.Status.OK, uploadMessage.toString());
+			        	serviceResponse = Utils.post(jo, url);
+			        	String serviceResponseStr = serviceResponse.toString();
+//			        	Log.d(TAG, "serviceResponseStr: " + serviceResponseStr);
+						PluginResult result = new PluginResult(PluginResult.Status.OK, serviceResponseStr);
 			        	result.setKeepCallback(true);
 //						callbackContext.success(uploadMessage);
 			        	callbackContext.sendPluginResult(result);
 			        } catch (Exception e) {
 			            e.printStackTrace();
-			            callbackContext.error("Upload Error: " + uploadMessage + " Error: " + e);
+			            callbackContext.error("Upload Error: " + serviceResponse + " Error: " + e);
 			        }
 			    }
 			});

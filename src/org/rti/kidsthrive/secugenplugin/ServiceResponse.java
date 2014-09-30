@@ -5,7 +5,7 @@ import org.json.JSONObject;
 public class ServiceResponse extends JSONObject {
 	
 	private JSONObject scannerPayload;
-	private String serviceMessage;
+	private JSONObject serviceMessage;
 	
 	public JSONObject getScannerPayload() {
 		return scannerPayload;
@@ -13,13 +13,11 @@ public class ServiceResponse extends JSONObject {
 	public void setScannerPayload(JSONObject scannerPayload) {
 		this.scannerPayload = scannerPayload;
 	}
-	public String getServiceMessage() {
+	public JSONObject getServiceMessage() {
 		return serviceMessage;
 	}
-	public void setServiceMessage(String serviceMessage) {
+	public void setServiceMessage(JSONObject serviceMessage) {
 		this.serviceMessage = serviceMessage;
 	}
-	
-	
 
 }
