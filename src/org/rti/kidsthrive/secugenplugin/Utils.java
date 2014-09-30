@@ -221,7 +221,7 @@ public class Utils {
 		return responseBody;
 	}
 	
-	public static String post(JSONObject payload, String urlServer) throws IOException {
+	public static ServiceResponse post(JSONObject payload, String urlServer) throws IOException {
 		Log.d(TAG, "urlServer: "+"    "+urlServer);
 		HttpClient client = new DefaultHttpClient();
 //		CloseableHttpClient client = HttpClientBuilder.create().build();
@@ -238,14 +238,15 @@ public class Utils {
 //	    String authorizationString = "Basic " + Base64.encodeToString(("chris" + ":" + "chris").getBytes(), Base64.DEFAULT); //this line is diffe
 //	    post.setHeader("Authorization", authorizationString);
 //	    post.addHeader(BasicScheme.authenticate(new UsernamePasswordCredentials("chris", "chris"), "UTF-8", false));
-
-
+	    ServiceResponse serviceRespose = new ServiceResponse();
+	    serviceRespose.setScannerPayload(payload);
 	    //Handles what is returned from the page 
 	    ResponseHandler<String> responseHandler = new BasicResponseHandler();
 	    String responseBody = client.execute(post, responseHandler);
+	    serviceRespose.setServiceMessage(responseBody);
 		se.consumeContent();
 		client.getConnectionManager().shutdown();
-		return responseBody;
+		return serviceRespose;
 	}
 
 	// kudos: http://stunningco.de/2010/04/25/uploading-files-to-http-server-using-post-android-sdk/

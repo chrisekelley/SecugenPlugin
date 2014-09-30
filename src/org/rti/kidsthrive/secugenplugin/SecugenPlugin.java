@@ -503,10 +503,10 @@ public class SecugenPlugin extends CordovaPlugin {
 			Thread thread = new Thread(new Runnable(){
 			    @Override
 			    public void run() {
-			    	String uploadMessage = "";
+			    	ServiceResponse uploadMessage = new ServiceResponse();
 			        try {
 			        	uploadMessage = Utils.post(jo, url);
-			        	PluginResult result = new PluginResult(PluginResult.Status.OK, uploadMessage);
+			        	PluginResult result = new PluginResult(PluginResult.Status.OK, uploadMessage.toString());
 			        	result.setKeepCallback(true);
 //						callbackContext.success(uploadMessage);
 			        	callbackContext.sendPluginResult(result);
