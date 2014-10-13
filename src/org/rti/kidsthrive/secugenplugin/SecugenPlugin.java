@@ -464,16 +464,25 @@ public class SecugenPlugin extends CordovaPlugin {
         debugMessage("Clicked REGISTER\n");
         int[] templateSize;
 		try {
-			templateSize = captureImageTemplate();
-			String urlServer = SecugenPlugin.getServerUrl() + SecugenPlugin.getServerUrlFilepath() + "Enroll";
-			buildUploadMessage(callbackContext, templateSize, urlServer);
-	        createImageFile(callbackContext);
+			try {
+				templateSize = captureImageTemplate();
+				Log.d(TAG, "templateSize: " + templateSize.toString());
+				if (templateSize == new int[0]) {
+					Log.d(TAG, "captureImageTemplate Error: templateSize is 0 sized.");
+					callbackContext.error("captureImageTemplate Error: templateSize is 0 sized.");
+				}
+				String urlServer = SecugenPlugin.getServerUrl() + SecugenPlugin.getServerUrlFilepath() + "Enroll";
+				buildUploadMessage(callbackContext, templateSize, urlServer);
+		        createImageFile(callbackContext);
+			} catch (Exception e) {
+				Log.d(TAG, "Caught from the exception: captureImageTemplate Error" + e);
+				callbackContext.error("captureImageTemplate Error: " + e);
+			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			callbackContext.error("captureImageTemplate Error: " + e);
 		}
-
     }
     
     private void identify(final CallbackContext callbackContext) {
@@ -481,12 +490,21 @@ public class SecugenPlugin extends CordovaPlugin {
     	int[] templateSize;
 		try {
 			templateSize = captureImageTemplate();
+			Log.d(TAG, "templateSize: " + templateSize.toString());
+			if (templateSize.length == 0) {
+				Log.d(TAG, "captureImageTemplate Error: templateSize is 0 sized.");
+//				callbackContext.error("captureImageTemplate Error: templateSize is 0 sized.");
+			}
 //			UUID uuid = UUID.randomUUID();
 	    	String urlServer = SecugenPlugin.getServerUrl() + SecugenPlugin.getServerUrlFilepath() + "Identify";
 	    	buildUploadMessage(callbackContext, templateSize, urlServer);
 	    	createImageFile(callbackContext);
 		} catch (Exception e) {
-			callbackContext.error("captureImageTemplate Error: " + e);
+			e.printStackTrace();
+//			callbackContext.error("captureImageTemplate Error: " + e);
+			PluginResult result = new PluginResult(PluginResult.Status.OK, "Scan failed: Try again.");
+        	result.setKeepCallback(true);
+        	callbackContext.sendPluginResult(result);
 		}
 
     }
@@ -530,8 +548,9 @@ public class SecugenPlugin extends CordovaPlugin {
         dwTimeElapsed = dwTimeEnd-dwTimeStart;
         debugMessage("CreateTemplate() ret:" + result + " [" + dwTimeElapsed + "ms]\n");
         if (result == 105) {
-        	debugMessage("Error: Template Extraction failed" );
-        	throw new Exception("Error: Template Extraction failed" );
+        	debugMessage("Error: Template Extraction failed! " );
+        	templateSize = new int[0];
+//        	throw new Exception("Error: Template Extraction failed" );
         }
 //        String templatefileName = "register.template-" + System.currentTimeMillis() + ".txt";
 //        Utils.DumpFile(templatefileName, mRegisterTemplate);
