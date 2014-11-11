@@ -490,14 +490,14 @@ public class SecugenPlugin extends CordovaPlugin {
     	int[] templateSize;
 		try {
 			templateSize = captureImageTemplate();
-			Log.d(TAG, "templateSize: " + templateSize[0]);
 			if (templateSize.length == 0) {
 				String msg = "Scan failed: Unable to capture fingerprint. Please kill the app in the Task Manager and restart the app.";
 				Log.d(TAG, msg);
-				PluginResult result = new PluginResult(PluginResult.Status.ERROR, msg);
+				PluginResult result = new PluginResult(PluginResult.Status.OK, msg);
 	        	result.setKeepCallback(true);
 	        	callbackContext.sendPluginResult(result);
 			} else {
+				Log.d(TAG, "templateSize: " + templateSize[0]);
 //				UUID uuid = UUID.randomUUID();
 		    	String urlServer = SecugenPlugin.getServerUrl() + SecugenPlugin.getServerUrlFilepath() + "Identify";
 		    	buildUploadMessage(callbackContext, templateSize, urlServer);
@@ -506,7 +506,7 @@ public class SecugenPlugin extends CordovaPlugin {
 		} catch (Exception e) {
 			e.printStackTrace();
 //			callbackContext.error("captureImageTemplate Error: " + e);
-			PluginResult result = new PluginResult(PluginResult.Status.ERROR, "Scan failed: Try again.");
+			PluginResult result = new PluginResult(PluginResult.Status.OK, "Scan failed: Try again.");
         	result.setKeepCallback(true);
         	callbackContext.sendPluginResult(result);
 		}
