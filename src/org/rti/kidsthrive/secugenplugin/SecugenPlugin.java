@@ -42,6 +42,7 @@ public class SecugenPlugin extends CordovaPlugin {
 	private static String serverUrl = "";
 	private static String serverUrlFilepath = "";
 	private static String serverKey = "";
+	private static String projectName = "";
 	private static String templateFormat = "";
 	
 	// actions
@@ -52,6 +53,7 @@ public class SecugenPlugin extends CordovaPlugin {
     private static final String CAPTURE = "capture";
     private static final String BLINK = "blink";
     private static final String VERIFY = "verify";
+    private static final String SCAN = "scan";
     private byte[] mRegisterImage;
     private byte[] mVerifyImage;
     private byte[] mRegisterTemplate;
@@ -100,11 +102,14 @@ public class SecugenPlugin extends CordovaPlugin {
     	String serverKey = context.getResources().getString(id);
     	LOG.d(TAG,"serverKey: " + serverKey);
     	SecugenPlugin.setServerKey(serverKey);
+    	id = context.getResources().getIdentifier("projectName", "string", this.cordova.getActivity().getPackageName());
+    	String projectName = context.getResources().getString(id);
+    	LOG.d(TAG,"projectName: " + projectName);
+    	SecugenPlugin.setProjectName(projectName);
     	id = context.getResources().getIdentifier("templateFormat", "string", this.cordova.getActivity().getPackageName());
     	String templateFormat = context.getResources().getString(id);
     	LOG.d(TAG,"templateFormat: " + templateFormat);
     	SecugenPlugin.setTemplateFormat(templateFormat);
-    	
     	id = context.getResources().getIdentifier("serverUrlFilepath", "string", this.cordova.getActivity().getPackageName());
     	LOG.d(TAG,"serverUrlFilepath id: " + id);
     	String serverUrlFilepath = context.getResources().getString(id);
@@ -141,6 +146,13 @@ public class SecugenPlugin extends CordovaPlugin {
     		cordova.getActivity().runOnUiThread(new Runnable() {
     			public void run() {
     				identify(callbackContext);
+    			}
+    		});
+    		return true;
+    	} else if (action.equals(SCAN)) {
+    		cordova.getActivity().runOnUiThread(new Runnable() {
+    			public void run() {
+    				scan(callbackContext);
     			}
     		});
     		return true;
@@ -272,7 +284,36 @@ public class SecugenPlugin extends CordovaPlugin {
         	result.setKeepCallback(true);
         	callbackContext.sendPluginResult(result);
 		}
-
+    }
+    
+    private void scan(final CallbackContext callbackContext) {
+    	debugMessage("Clicked scan\n");
+    	int[] templateSize;
+    	try {
+    		templateSize = captureImageTemplate();
+    		if (templateSize.length == 0) {
+    			String msg = "Scan failed: Unable to capture fingerprint. Please kill the app in the Task Manager and restart the app.";
+    			Log.d(TAG, msg);
+    			PluginResult result = new PluginResult(PluginResult.Status.ERROR, msg);
+    			result.setKeepCallback(true);
+    			callbackContext.sendPluginResult(result);
+    		} else {
+    			Log.d(TAG, "templateSize: " + templateSize[0]);
+    			String templateString;
+    			byte[] newTemplate = Arrays.copyOfRange(mRegisterTemplate, 0, templateSize[0]);
+    			templateString = Utils.encodeHexToString(newTemplate, Utils.DIGITS_UPPER);
+    			Log.d(TAG, "templateString: " + templateString);
+    			PluginResult result = new PluginResult(PluginResult.Status.OK, templateString);
+	        	result.setKeepCallback(true);
+	        	callbackContext.sendPluginResult(result);
+    		}
+    	} catch (Exception e) {
+    		e.printStackTrace();
+//			callbackContext.error("captureImageTemplate Error: " + e);
+    		PluginResult result = new PluginResult(PluginResult.Status.ERROR, "Scan failed: Try again.");
+    		result.setKeepCallback(true);
+    		callbackContext.sendPluginResult(result);
+    	}
     }
 
 	/**
@@ -347,7 +388,7 @@ public class SecugenPlugin extends CordovaPlugin {
 		final JSONObject jo = new JSONObject();
 		try {
 			jo.put("Key", SecugenPlugin.getServerKey());
-			jo.put("Name", "Test CK");
+			jo.put("Name", SecugenPlugin.getProjectName());
 			jo.put("Template", templateString);
 			jo.put("Finger", 1);
 		} catch (JSONException e1) {
@@ -636,6 +677,14 @@ public class SecugenPlugin extends CordovaPlugin {
 
 	public static void setTemplateFormat(String templateFormat) {
 		SecugenPlugin.templateFormat = templateFormat;
+	}
+
+	public static String getProjectName() {
+		return projectName;
+	}
+
+	public static void setProjectName(String projectName) {
+		SecugenPlugin.projectName = projectName;
 	}
 
 }
