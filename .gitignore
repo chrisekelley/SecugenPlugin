@@ -5,3 +5,5 @@ assets
 proguard-project.txt
 armeabi
 FDxSDKProAndroid.jar
+.idea
+.DS_Store

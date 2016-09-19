@@ -24,3 +24,6 @@ exports.requestPermission = function(success, error) {
 exports.scan = function(success, error) {
 	exec(success, error, "SecugenPlugin", "scan", []);
 };
+exports.scanFile = function(success, error) {
+	exec(success, error, "SecugenPlugin", "scanFile", []);
+};

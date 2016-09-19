@@ -316,6 +316,38 @@ public class SecugenPlugin extends CordovaPlugin {
     	}
     }
 
+    /**
+     * Scans file and saves image file, sends filePath to PluginResult.
+     * @param callbackContext
+     */
+    private void scanFile(final CallbackContext callbackContext) {
+    	debugMessage("Clicked scan\n");
+    	byte[] image;
+    	try {
+            image = captureImage();
+    		if (image.length == 0) {
+    			String msg = "Scan failed: Unable to capture fingerprint. Please kill the app in the Task Manager and restart the app.";
+    			Log.d(TAG, msg);
+    			PluginResult result = new PluginResult(PluginResult.Status.ERROR, msg);
+    			result.setKeepCallback(true);
+    			callbackContext.sendPluginResult(result);
+    		} else {
+    			Log.d(TAG, "image size: " + image.length;
+                String filePath = createImageFile(callbackContext);
+    			Log.d(TAG, "filePath: " + filePath);
+    			PluginResult result = new PluginResult(PluginResult.Status.OK, filePath);
+	        	result.setKeepCallback(true);
+	        	callbackContext.sendPluginResult(result);
+    		}
+    	} catch (Exception e) {
+    		e.printStackTrace();
+//			callbackContext.error("captureImageTemplate Error: " + e);
+    		PluginResult result = new PluginResult(PluginResult.Status.ERROR, "Scan failed: Try again.");
+    		result.setKeepCallback(true);
+    		callbackContext.sendPluginResult(result);
+    	}
+    }
+
 	/**
 	 * @return
 	 * @throws Exception 
@@ -372,10 +404,46 @@ public class SecugenPlugin extends CordovaPlugin {
 //        final String templatePath = SecugenPlugin.getTemplatePath() + templatefileName;
 		return templateSize;
 	}
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	public byte[] captureImage() throws Exception {
+		int[] templateSize = new int[1];
+
+		SecuGen.FDxSDKPro.SGDeviceInfoParam deviceInfo = new SecuGen.FDxSDKPro.SGDeviceInfoParam();
+		sgfplib.GetDeviceInfo(deviceInfo);
+        mImageWidth = deviceInfo.imageWidth;
+		mImageHeight= deviceInfo.imageHeight;
+		int dpi = deviceInfo.imageDPI;
+		debugMessage("mImageWidth: " + mImageWidth);
+		debugMessage("mImageHeight: " + mImageHeight);
+		debugMessage("dpi: " + dpi);
+		if (mRegisterImage != null)
+        	mRegisterImage = null;
+        mRegisterImage = new byte[mImageWidth*mImageHeight];
+//    	this.mCheckBoxMatched.setChecked(false);
+        dwTimeStart = System.currentTimeMillis();
+        long result = sgfplib.GetImage(mRegisterImage);
+//        Utils.DumpFile("register" + System.currentTimeMillis() +".raw", mRegisterImage);
+//		afis.setDpi(dpi);
+        dwTimeEnd = System.currentTimeMillis();
+        dwTimeElapsed = dwTimeEnd-dwTimeStart;
+        debugMessage("GetImage() ret:" + result + " [" + dwTimeElapsed + "ms]\n");
+		if (result == 2) {
+			debugMessage("Error: GetImage failed - Function call failed." );
+		}
+
+//        String templatefileName = "register.template-" + System.currentTimeMillis() + ".txt";
+//        Utils.DumpFile(templatefileName, mRegisterTemplate);
+//        final String templatePath = SecugenPlugin.getTemplatePath() + templatefileName;
+		return byte[];
+	}
 
 	/**
 	 * @param callbackContext
 	 * @param templateSize
+	 * @param filePath
 	 * @param url TODO
 	 */
 	public void buildUploadMessage(final CallbackContext callbackContext,
@@ -435,7 +503,7 @@ public class SecugenPlugin extends CordovaPlugin {
 	/**
 	 * @param callbackContext
 	 */
-	public void createImageFile(final CallbackContext callbackContext) {
+	public String createImageFile(final CallbackContext callbackContext) {
         ByteBuffer byteBuf = ByteBuffer.allocate(mImageWidth*mImageHeight);
 		Bitmap b = Bitmap.createBitmap(mImageWidth,mImageHeight, Bitmap.Config.ARGB_8888);
         byteBuf.put(mRegisterImage);
@@ -447,6 +515,7 @@ public class SecugenPlugin extends CordovaPlugin {
 //        mImageViewFingerprint.setImageBitmap(this.toGrayscale(b));  
         final String registrationFile = "register-" + System.currentTimeMillis();
 		final String outputFilename = Utils.saveImageFile(callbackContext, b, registrationFile);
+		return outputFilename;
 	}
 
 	/**
