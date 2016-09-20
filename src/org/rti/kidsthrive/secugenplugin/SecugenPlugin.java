@@ -332,7 +332,7 @@ public class SecugenPlugin extends CordovaPlugin {
     			result.setKeepCallback(true);
     			callbackContext.sendPluginResult(result);
     		} else {
-    			Log.d(TAG, "image size: " + image.length;
+    			Log.d(TAG, "image size: " + image.length);
                 String filePath = createImageFile(callbackContext);
     			Log.d(TAG, "filePath: " + filePath);
     			PluginResult result = new PluginResult(PluginResult.Status.OK, filePath);
@@ -437,7 +437,7 @@ public class SecugenPlugin extends CordovaPlugin {
 //        String templatefileName = "register.template-" + System.currentTimeMillis() + ".txt";
 //        Utils.DumpFile(templatefileName, mRegisterTemplate);
 //        final String templatePath = SecugenPlugin.getTemplatePath() + templatefileName;
-		return byte[];
+		return mRegisterImage;
 	}
 
 	/**
